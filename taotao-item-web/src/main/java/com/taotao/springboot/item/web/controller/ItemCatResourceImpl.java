@@ -20,7 +20,8 @@ import java.util.List;
  * @author ChengTengfei
  * @version 1.0
  */
-@Service(interfaceClass = ItemCatResource.class, retries = 2)
+//@Service(interfaceClass = ItemCatResource.class, retries = 2)
+@Service(interfaceClass = ItemCatResource.class)
 @Controller
 public class ItemCatResourceImpl implements ItemCatResource{
 

@@ -21,7 +21,8 @@ import org.springframework.stereotype.Controller;
  * @author ChengTengfei
  * @version 1.0
  */
-@Service(interfaceClass = ItemResource.class, retries = 2)
+//@Service(interfaceClass = ItemResource.class, retries = 2)
+@Service(interfaceClass = ItemResource.class)
 @Controller
 public class ItemResourceImpl implements ItemResource {
 
