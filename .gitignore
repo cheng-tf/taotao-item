@@ -17,6 +17,7 @@
 *.ipr
 log.path_IS_UNDEFINED
 *log.*
+logs/
 #*git*
 taotao-*/.settings
 taotao-*/target
