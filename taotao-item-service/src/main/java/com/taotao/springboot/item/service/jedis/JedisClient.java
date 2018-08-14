@@ -40,9 +40,17 @@ public interface JedisClient {
     Boolean expire(String key, int seconds);
 
     /**
+     * 删除键
+     * @param key 键
+     * @return
+     */
+    Boolean delete(String key);
+
+    /**
      * 判断键是否存在
      */
     Boolean exists(String key);
+
 
     /**
      * 设置key对应的value值自增1
