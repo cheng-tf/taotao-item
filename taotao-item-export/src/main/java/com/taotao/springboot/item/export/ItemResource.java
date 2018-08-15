@@ -16,9 +16,16 @@ import com.taotao.springboot.item.domain.result.TaotaoResult;
 public interface ItemResource {
 
     /**
-     * 根据商品ID查询商品
+     * 根据商品ID获取商品基本信息
      */
     TbItem getItemById(long itemId);
+
+
+    /**
+     * 根据商品ID获取商品描述
+     */
+    TbItemDesc getItemDescById(long itemId);
+
 
     /**
      * 查询商品列表
@@ -29,10 +36,5 @@ public interface ItemResource {
      * 商品添加
      */
     TaotaoResult addItem(TbItem item, String desc);
-
-    /**
-     * 根据商品ID获取详情
-     */
-    TbItemDesc getItemDescById(long itemId);
 
 }

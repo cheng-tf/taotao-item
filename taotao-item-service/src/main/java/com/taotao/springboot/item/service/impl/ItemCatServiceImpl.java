@@ -32,12 +32,12 @@ public class ItemCatServiceImpl implements ItemCatService {
     @Override
     @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
     public List<EasyUITreeNode> getItemCatList(long parentId) {
-        // 根据父节点ID查询子节点列表
+        // #1 根据父节点ID查询子节点列表
         TbItemCatExample example = new TbItemCatExample();
         TbItemCatExample.Criteria criteria = example.createCriteria();
         criteria.andParentIdEqualTo(parentId);
         List<TbItemCat> list = itemCatMapper.selectByExample(example);
-        // 转化为EasyUITreeNode列表
+        // #2 转化为EasyUITreeNode列表
         List<EasyUITreeNode> resultList = new ArrayList<>();
         for (TbItemCat itemCat : list) {
             EasyUITreeNode node = new EasyUITreeNode();

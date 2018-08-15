@@ -12,8 +12,7 @@ import com.taotao.springboot.item.domain.result.TaotaoResult;
 import com.taotao.springboot.item.mapper.TbItemDescMapper;
 import com.taotao.springboot.item.mapper.TbItemMapper;
 import com.taotao.springboot.item.service.ItemService;
-import com.taotao.springboot.item.service.jedis.JedisClient;
-import org.apache.activemq.command.ActiveMQTopic;
+import com.taotao.springboot.item.service.cache.CacheService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,13 +20,11 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
-import org.springframework.jms.core.MessageCreator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.jms.*;
 import java.util.Date;
 import java.util.List;
 
@@ -58,44 +55,69 @@ public class ItemServiceImpl implements ItemService{
     private RabbitTemplate rabbitTemplate;
 
     @Autowired
-    private JedisClient jedisClient;
+    private CacheService cacheService;
+
     @Value("${ITEM_INFO}")
     private String ITEM_INFO;
+
     @Value("${TIEM_EXPIRE}")
     private Integer TIEM_EXPIRE;
 
     @Override
     @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
     public TbItem getItemById(long itemId) {
-        // 查询缓存
+        // #1 查询缓存
         try {
-            String json = jedisClient.get(ITEM_INFO + ":" + itemId + ":BASE");
+            String json = cacheService.get(ITEM_INFO + ":" + itemId + ":BASE");
             if (StringUtils.isNotBlank(json)) {
                 return JacksonUtils.jsonToPojo(json, TbItem.class);
             }
         } catch(Exception e) {
-            e.printStackTrace();
+            log.error("商品基本信息查询缓存异常 error={}", e);
         }
-        // 缓存中不存在，则查询数据库
+        // #2 若缓存数据不存在，则查询数据库，并添加缓存
         TbItem item = itemMapper.selectByPrimaryKey(itemId);
-        // 添加缓存
         try {
-            jedisClient.set(ITEM_INFO + ":" + itemId + ":BASE", JacksonUtils.objectToJson(item));
-            jedisClient.expire(ITEM_INFO + ":" + itemId  + ":BASE", TIEM_EXPIRE);
+            cacheService.set(ITEM_INFO + ":" + itemId + ":BASE", JacksonUtils.objectToJson(item));
+            cacheService.expire(ITEM_INFO + ":" + itemId  + ":BASE", TIEM_EXPIRE);
         } catch(Exception e) {
-            e.printStackTrace();
+            log.error("商品基本信息设置缓存异常 error={}", e);
         }
         return item;
     }
 
     @Override
     @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+    public TbItemDesc getItemDescById(long itemId) {
+        // #1 查询缓存
+        try {
+            String json = cacheService.get(ITEM_INFO + ":" + itemId + ":DESC");
+            if (StringUtils.isNoneBlank(json)) {
+                return JacksonUtils.jsonToPojo(json, TbItemDesc.class);
+            }
+        } catch(Exception e) {
+            log.error("商品描述查询缓存异常 error={}", e);
+        }
+        // #2 若缓存数据不存在，则查询数据库，并添加缓存
+        TbItemDesc itemDesc = itemDescMapper.selectByPrimaryKey(itemId);
+        try {
+            cacheService.set(ITEM_INFO + ":" + itemId + ":DESC", JacksonUtils.objectToJson(itemDesc));
+            cacheService.expire(ITEM_INFO + ":" + itemId + ":DESC", TIEM_EXPIRE);
+        } catch(Exception e) {
+            log.error("商品描述添加缓存异常 error={}", e);
+        }
+        return itemDesc;
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
     public EasyUIDataGridResult getItemList(int page, int rows) {
-        // 设置分页条件
+        // #1 设置分页条件
         PageHelper.startPage(page, rows);
+        // #2 执行查询，获取商品列表信息
         TbItemExample itemExample = new TbItemExample();
         List<TbItem> itemList = itemMapper.selectByExample(itemExample);
-        // 封装查询结果
+        // #3 封装查询结果
         PageInfo<TbItem> pageInfo = new PageInfo<>(itemList);
         EasyUIDataGridResult result = new EasyUIDataGridResult();
         result.setTotal(pageInfo.getTotal());
@@ -105,14 +127,14 @@ public class ItemServiceImpl implements ItemService{
 
     @Override
     public TaotaoResult addItem(TbItem item, String desc) {
-        // 插入商品数据
+        // #1 添加商品基本信息
         long itemId = IDUtils.genItemId();
         item.setId(itemId);
-        item.setStatus((byte) 1);		// 商品状态，1-正常，2-下架，3-删除
+        item.setStatus((byte) 1);// 商品状态，1-正常，2-下架，3-删除
         item.setCreated(new Date());
         item.setUpdated(new Date());
         itemMapper.insert(item);
-        // 插入商品描述数据
+        // #2 添加商品描述
         TbItemDesc itemDesc = new TbItemDesc();
         itemDesc.setItemId(itemId);
         itemDesc.setItemDesc(desc);
@@ -127,33 +149,14 @@ public class ItemServiceImpl implements ItemService{
                 return session.createTextMessage(itemId + "");
             }
         });*/
-        // 基于RabbitMQ发送商品添加消息
-        this.rabbitTemplate.convertAndSend("item-add","", String.valueOf(itemId));
+        // #3 基于RabbitMQ发送商品添加消息
+        try {
+            this.rabbitTemplate.convertAndSend("item-add","", String.valueOf(itemId));
+            log.error("RabbitMQ发送商品添加消息成功");
+        } catch (Exception e) {
+            log.error("RabbitMQ发送商品添加消息失败 error={}", e);
+        }
         return TaotaoResult.ok();
-    }
-
-    @Override
-    @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-    public TbItemDesc getItemDescById(long itemId) {
-        // 查询缓存
-        try {
-            String json = jedisClient.get(ITEM_INFO + ":" + itemId + ":DESC");
-            if (StringUtils.isNoneBlank(json)) {
-                return JacksonUtils.jsonToPojo(json, TbItemDesc.class);
-            }
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-        // 缓存中不存在，则查询数据库
-        TbItemDesc itemDesc = itemDescMapper.selectByPrimaryKey(itemId);
-        // 添加缓存
-        try {
-            jedisClient.set(ITEM_INFO + ":" + itemId + ":DESC", JacksonUtils.objectToJson(itemDesc));
-            jedisClient.expire(ITEM_INFO + ":" + itemId + ":DESC", TIEM_EXPIRE);
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-        return itemDesc;
     }
 
 }

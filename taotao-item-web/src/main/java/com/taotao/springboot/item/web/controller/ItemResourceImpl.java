@@ -45,6 +45,19 @@ public class ItemResourceImpl implements ItemResource {
     }
 
     @Override
+    public TbItemDesc getItemDescById(long itemId) {
+        TbItemDesc res = null;
+        try {
+            log.info("根据商品ID查询商品详情信息 getItemDescById itemId = " + itemId);
+            res = itemService.getItemDescById(itemId);
+            log.info("根据商品ID查询商品详情信息 getItemDescById res = {}", JacksonUtils.objectToJson(res));
+        } catch (Exception e){
+            log.error("### Call ItemResourceImpl.getItemDescById error = {}", e);
+        }
+        return res;
+    }
+
+    @Override
     public EasyUIDataGridResult getItemList(int page, int rows) {
         EasyUIDataGridResult res = null;
         try {
@@ -66,19 +79,6 @@ public class ItemResourceImpl implements ItemResource {
             log.info("添加商品信息 addItem res = {}", JacksonUtils.objectToJson(res));
         } catch (Exception e){
             log.error("### Call ItemResourceImpl.addItem error = {}", e);
-        }
-        return res;
-    }
-
-    @Override
-    public TbItemDesc getItemDescById(long itemId) {
-        TbItemDesc res = null;
-        try {
-            log.info("根据商品ID查询商品详情信息 getItemDescById itemId = " + itemId);
-            res = itemService.getItemDescById(itemId);
-            log.info("根据商品ID查询商品详情信息 getItemDescById res = {}", JacksonUtils.objectToJson(res));
-        } catch (Exception e){
-            log.error("### Call ItemResourceImpl.getItemDescById error = {}", e);
         }
         return res;
     }
