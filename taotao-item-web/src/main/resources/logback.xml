@@ -2,7 +2,7 @@
 <configuration>
 
     <!-- 日志文件：存储位置 -->
-    <property name="log.path" value="F:/Workspace/logs/taotao/taotao-item" />
+    <property name="log.path" value="logs" />
 
     <!-- appender：写日志组件 -->
     <!-- ConsoleAppender：日志输出控制台 -->
