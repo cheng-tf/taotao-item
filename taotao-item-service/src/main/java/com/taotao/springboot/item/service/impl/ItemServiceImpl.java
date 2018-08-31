@@ -152,7 +152,7 @@ public class ItemServiceImpl implements ItemService{
         // #3 基于RabbitMQ发送商品添加消息
         try {
             this.rabbitTemplate.convertAndSend("item-add","", String.valueOf(itemId));
-            log.error("RabbitMQ发送商品添加消息成功");
+            log.info("RabbitMQ发送商品添加消息成功");
         } catch (Exception e) {
             log.error("RabbitMQ发送商品添加消息失败 error={}", e);
         }
