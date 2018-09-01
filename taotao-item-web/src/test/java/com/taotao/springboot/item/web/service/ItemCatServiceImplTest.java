@@ -3,7 +3,7 @@ package com.taotao.springboot.item.web.service;
 import com.taotao.springboot.item.common.utils.JacksonUtils;
 import com.taotao.springboot.item.domain.result.EasyUITreeNode;
 import com.taotao.springboot.item.service.ItemCatService;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +31,28 @@ public class ItemCatServiceImplTest {
     private ItemCatService itemCatService;
 
     private static Logger log = LoggerFactory.getLogger(ItemCatServiceImplTest.class);
+
+    @BeforeClass
+    public static void beforeClassTest() {
+        log.info("单元测试开始之前初始化...");
+        log.info("---------------------------------------------");
+    }
+
+    @AfterClass
+    public static void afterClassTest() {
+        log.info("---------------------------------------------");
+        log.info("单元测试结束之后执行...");
+    }
+
+    @Before
+    public void beforeTest() {
+        log.info("单元测试方法开始之前执行...");
+    }
+
+    @After
+    public void afterTest() {
+        log.info("单元测试方法结束之后执行...");
+    }
 
     // 根据父节点ID查询子节点列表
     @Test
