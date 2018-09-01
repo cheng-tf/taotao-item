@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,6 +72,7 @@ public class ItemServiceImplTest {
 
     // 商品添加
     @Test
+    // @Rollback
     public void testAddItem() {
         TbItem item = new TbItem();
         item.setTitle("百加 (100＋) V6 32G版 银润 联通3G手机 双卡双待");
