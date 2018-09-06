@@ -130,7 +130,8 @@ public class ItemServiceImpl implements ItemService{
         // #1 添加商品基本信息
         long itemId = IDUtils.genItemId();
         item.setId(itemId);
-        item.setStatus((byte) 1);// 商品状态，1-正常，2-下架，3-删除
+        // 商品状态，1-正常，2-下架，3-删除
+        item.setStatus((byte) 1);
         item.setCreated(new Date());
         item.setUpdated(new Date());
         itemMapper.insert(item);
@@ -149,8 +150,8 @@ public class ItemServiceImpl implements ItemService{
                 return session.createTextMessage(itemId + "");
             }
         });*/
-        // #3 基于RabbitMQ发送商品添加消息
         try {
+            // #3 基于RabbitMQ发送商品添加消息
             this.rabbitTemplate.convertAndSend("item-add","", String.valueOf(itemId));
             log.info("RabbitMQ发送商品添加消息成功");
         } catch (Exception e) {
